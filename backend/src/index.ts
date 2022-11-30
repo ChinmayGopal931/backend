@@ -2,31 +2,52 @@ import express from "express";
 import {
   connectToDatabase,
   addAccountsData,
+  getCacheData,
 } from "./services/database.service";
 import { AccountService } from "./services/account.service";
+import { RedisService } from "./services/redisClient.service";
 import Account from "./models/account.model";
 import { accountValueRouter } from "./routes/account.router";
 import { PriceEngineService } from "./services/priceEngine.service";
 
 const app = express();
 const port = process.env.PORT || 8080; // default port to listen
+const REDIS_PORT = 6379;
+let PORT = 5000;
 
-connectToDatabase()
-  .then(async () => {
-    await fetchAccountsData();
-    setInterval(async () => await fetchAccountsData(), 60 * 60 * 1000);
-    app.use("/accountValue", accountValueRouter);
+getCacheData()
+  .then(async (redisObject) => {
+    console.log("home", redisObject.redisClient);
 
-    console.log("here");
+    app.get(
+      "/repos/:username",
+      redisObject.redisService.cache,
+      redisObject.redisService.getRepos
+    );
 
-    app.listen(port, () => {
-      console.log(`Server started at http://localhost:${port}`);
+    app.listen(5000, () => {
+      console.log(`App listening on port ${PORT}`);
     });
   })
   .catch((error: Error) => {
     console.error("Database connection failed", error);
     process.exit();
   });
+
+// connectToDatabase()
+//   .then(async () => {
+//     await fetchAccountsData();
+//     setInterval(async () => await fetchAccountsData(), 60 * 60 * 1000);
+//     app.use("/accountValue", accountValueRouter);
+
+//     app.listen(port, () => {
+//       console.log(`Server started at http://localhost:${port}`);
+//     });
+//   })
+//   .catch((error: Error) => {
+//     console.error("Database connection failed", error);
+//     process.exit();
+//   });
 
 const fetchAccountsData = async () => {
   console.log(`[${new Date().toUTCString()}] Start fetching accounts`);
@@ -56,20 +77,21 @@ const fetchAccountsData = async () => {
   );
 };
 
-// const fetchPriceData = async () => {
-//   console.log(`[${new Date().toUTCString()}] Start fetching price data`);
-//   let priceEngineService: PriceEngineService = new PriceEngineService();
+const fetchPriceData = async () => {
+  console.log(`[${new Date().toUTCString()}] Start fetching price data`);
+  let priceEngineService: PriceEngineService = new PriceEngineService();
+  const accountService: AccountService = new AccountService();
 
-//   const tokenPrices = await priceEngineService.getPricesLowerCase(
-//     accountService.getActiveConstants()
-//   );
+  const tokenPrices = await priceEngineService.getPricesLowerCase(
+    accountService.getActiveConstants()
+  );
 
-//   console.log("tokenprices ", tokenPrices);
+  console.log("tokenprices ", tokenPrices);
 
-//   console.log(
-//     `[${new Date().toUTCString()}] After Console log. Data not saved to Database`
-//   );
-// };
+  console.log(
+    `[${new Date().toUTCString()}] After Console log. Data not saved to Database`
+  );
+};
 
 const timer = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
