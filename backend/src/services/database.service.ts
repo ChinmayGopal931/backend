@@ -1,6 +1,8 @@
 import * as mongoDB from "mongodb";
 import * as dotenv from "dotenv";
 import Account from "../models/account.model";
+import { RedisService } from "./redisClient.service";
+import { createClient } from "redis";
 
 export const collections: {
   sentimentAccounts?: mongoDB.Collection<Account>;
@@ -30,9 +32,27 @@ export const addAccountsData = async (data: Account[]) => {
   try {
     const result = await collections.sentimentAccounts.insertMany(data);
     result
-      ? console.log(`Successfully added ${result.insertedCount} accounts to the database`)
+      ? console.log(
+          `Successfully added ${result.insertedCount} accounts to the database`
+        )
       : console.log("Failed to add accounts data to the database");
   } catch (error) {
     console.error(error);
   }
 };
+
+export const getCacheData = async () => {
+  try {
+    const redisService: RedisService = new RedisService();
+
+    let redisClient = createClient();
+
+    await redisService.setClient(redisClient);
+
+    return { redisClient, redisService };
+  } catch (error) {
+    console.log("db error");
+    console.error(error);
+  }
+};
+
