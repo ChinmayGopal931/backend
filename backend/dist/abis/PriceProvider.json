@@ -1,0 +1,21 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address[]",
+                "name": "tokens",
+                "type": "address[]"
+            }
+        ],
+        "name": "getPrices",
+        "outputs": [
+            {
+                "internalType": "uint[]",
+                "name": "price",
+                "type": "uint[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
